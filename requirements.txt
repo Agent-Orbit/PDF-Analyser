@@ -1,0 +1,7 @@
+streamlit
+sentence-transformers
+numpy
+pdfplumber
+python-dotenv
+faiss-cpu
+torch==2.12.0

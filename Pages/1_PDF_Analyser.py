@@ -87,7 +87,10 @@ def main():
 
         st.markdown('<div class="tag">PDF Analyser</div>', unsafe_allow_html=True)
         st.markdown("### Upload Document")
-        st.markdown('<span class="model-badge">⬡ gemini-2.5-flash · API</span>', unsafe_allow_html=True)
+        st.markdown('<span class="model-badge">⬡ gemini-2.0-flash · API</span>', unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown('<span class="model-badge">⚙ Mode</span>', unsafe_allow_html=True)
+        isBetter = st.toggle("Better Mode", value=False, help="Retrieves additional chunks if the first pass lacks enough context")
         st.markdown("---")
 
         uploadedData = st.file_uploader("Drop a PDF", type=["pdf"], label_visibility="collapsed")
@@ -109,7 +112,8 @@ def main():
 
                 st.session_state.pdf = uploadedData
                 st.session_state.pdf_id = uploadedData.file_id
-                st.session_state.model = "gemini-2.5-flash"
+                st.session_state.model = "gemini-2.0-flash"
+                st.session_state.isBetter = isBetter
 
         st.markdown("---")
 
@@ -198,7 +202,7 @@ def chatAI():
                     st.session_state.index,
                     user_prompt,
                     history=st.session_state.llm_history,
-                    isBetter=False
+                    isBetter=st.session_state.isBetter
                 )
 
             st.markdown(response)

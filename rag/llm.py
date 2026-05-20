@@ -52,10 +52,8 @@ def ask_gemini(prompt,history = None):
             }
         )
 
-    api_key = get_geminiapi()
-    genai.configure(api_key=api_key)
     chat = client.chats.create(
-        model="gemini-2.5-flash",
+        model="gemini-2.0-flash",
         history=gemini_history
     )
 
@@ -69,7 +67,7 @@ def ask_AI(model, prompt, history=None):
     if model == "Qwen":
         return ask_Qwen(prompt, history)
     
-    elif model == "gemini-2.5-flash":
+    elif model == "gemini-2.0-flash":
         
         return ask_gemini(prompt,history)
 
@@ -198,7 +196,8 @@ def summarize_turn(model, question, response):
     Assistant: {response}
     """
 
-    return ask_AI(model, prompt)
+    result = ask_AI(model, prompt)
+    return result if result else f"User asked: {question}"
 
 
 def main():

@@ -2,7 +2,7 @@
 
 [![Live](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)](YOUR_STREAMLIT_LINK_HERE)
 [![App](https://img.shields.io/badge/Open%20App-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](YOUR_STREAMLIT_LINK_HERE)
-![Model](https://img.shields.io/badge/Model-Gemini%202.5%20Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)
+
 
 ---
 
@@ -86,7 +86,7 @@ google-genai
 
 **1. Clone the repo**
 ```bash
-git clone https://github.com/YOUR_USERNAME/pdf-analyser
+git clone https://github.com/AliAkbar4025/PDF-Analyser
 cd pdf-analyser
 ```
 

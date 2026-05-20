@@ -7,11 +7,11 @@ q_emb = embedder.embed_query(q)
 
 index = retriever.build_index(embeddings)
 ret_chunks = retriever.get_topK_chunks(chunks,index,q_emb)
-print(llm.ask_AI(ret_chunks,q))
+print(llm.getResponse("Qwen",chunks,ret_chunks,index,q))
 
 print("===" * 20)
 
 q = "Whats the max amount of houses we can advertise in a single ad"
 q_emb = embedder.embed_query(q)
 ret_chunks = retriever.get_topK_chunks(chunks,index,q_emb)
-print(llm.ask_AI(ret_chunks,q))
+print(llm.getResponse("Qwen",chunks,ret_chunks,index,q))

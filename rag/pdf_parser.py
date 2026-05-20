@@ -1,18 +1,31 @@
 import pdfplumber
 
-def get_chunks(pdf,chunk_size = 500, overlap = 50, seperators = None):
+
+def get_chunks(pdf,chunk_size = 500, overlap = 50, separators = None):
+
+    chunks = []
 
     with pdfplumber.open(pdf) as pdf:
 
-        page = pdf.pages[0]
+        page = pdf.pages[1]
         text = page.extract_text()
-        print(text)
+        
+        
+        for page in pdf.pages:
+
+            text = page.extract_text()
+            if not text:
+                continue
+
+            page_chunk = recursive_chunk(text,chunk_size,overlap,separators)
+            chunks.extend(page_chunk)
+        
+    return chunks
 
 
+def recursive_chunk(text, chunk_size = 500, overlap = 50, separators = None):
 
-def recursive_chunk(text, chunk_size = 500, overlap = 50, seperators = None):
-
-    if seperators is None:
+    if separators is None:
 
         separators = ["\n\n", "\n", ". ", " ", ""]
 
@@ -45,7 +58,7 @@ def recursive_chunk(text, chunk_size = 500, overlap = 50, seperators = None):
 
                 proposed = part
             
-            if len(current_chunk) <= chunk_size:
+            if len(proposed) <= chunk_size:
 
                 current_chunk = proposed
             
@@ -63,6 +76,8 @@ def recursive_chunk(text, chunk_size = 500, overlap = 50, seperators = None):
                     else:
 
                         overlap_text = ""
+                    
+                    current_chunk = overlap_text + part
                 
                 else:
 

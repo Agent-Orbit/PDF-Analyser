@@ -20,3 +20,6 @@ def embed_query(query):
     embedding = np.array(embedding,dtype="float32")
     faiss.normalize_L2(embedding)
     return embedding
+
+
+

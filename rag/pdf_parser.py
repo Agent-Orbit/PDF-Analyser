@@ -7,8 +7,7 @@ def get_chunks(pdf,chunk_size = 500, overlap = 50, separators = None):
 
     with pdfplumber.open(pdf) as pdf:
 
-        page = pdf.pages[1]
-        text = page.extract_text()
+        
         
         
         for page in pdf.pages:

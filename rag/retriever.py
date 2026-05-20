@@ -11,7 +11,7 @@ def build_index(embeddings):
 def get_topK_chunks(chunks,index,q_emb,k=5):
 
     retrieved_chunks = []
-
+    k = min(k, len(chunks))
 
     distances, indices = index.search(q_emb,k=k)
 

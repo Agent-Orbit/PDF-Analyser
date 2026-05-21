@@ -91,6 +91,8 @@ def main():
         st.markdown("---")
         st.markdown('<span class="model-badge">⚙ Mode</span>', unsafe_allow_html=True)
         isBetter = st.toggle("Better Mode", value=False, help="Retrieves additional chunks if the first pass lacks enough context")
+        if isBetter:
+            st.caption("⚠ Uses 3-4x more API calls per question.")
         st.markdown("---")
 
         uploadedData = st.file_uploader("Drop a PDF", type=["pdf"], label_visibility="collapsed")

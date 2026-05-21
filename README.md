@@ -1,7 +1,7 @@
 # PDF Analyser
 
-[![Live](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)](YOUR_STREAMLIT_LINK_HERE)
-[![App](https://img.shields.io/badge/Open%20App-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](YOUR_STREAMLIT_LINK_HERE)
+[![Live](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)](https://analyser-for-pdf.streamlit.app/)
+[![App](https://img.shields.io/badge/Open%20App-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://analyser-for-pdf.streamlit.app/)
 
 
 ---

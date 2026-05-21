@@ -207,10 +207,32 @@ def chatAI():
                     isBetter=st.session_state.isBetter
                 )
 
-            st.markdown(response)
+            placeholder = st.empty()
+            full_response = ""
+
+            for token in getStream(response):
+
+                full_response += token
+                placeholder.markdown(full_response)
+            
+            summary = llm.summarize_turn(st.session_state.model,user_prompt,full_response)
+            st.session_state.llm_history = llm.appendHistory(summary,st.session_state.llm_history)
+                
+
+            # st.markdown(response)
 
         st.session_state.chat_history.append({"role": "user", "content": user_prompt})
-        st.session_state.chat_history.append({"role": "assistant", "content": response})
+        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+
+def getStream(response):
+
+    for chunk in response:
+
+            content = chunk.choices[0].delta.content or ""
+
+            if content:
+                yield content
+
 
 
 if __name__ == "__main__":

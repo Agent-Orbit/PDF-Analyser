@@ -32,7 +32,7 @@ def ask_Qwen(prompt, history=None):
 
 groq_client = Groq(api_key=get_groqapi())
 
-def ask_groq(prompt, history=None):
+def ask_groq(prompt, history=None,isStream=True):
 
     messages = (history or []) + [{"role": "user", "content": prompt}]
 
@@ -40,22 +40,29 @@ def ask_groq(prompt, history=None):
         model="llama-3.3-70b-versatile",
         messages=messages,
         max_tokens=1024,
-        temperature=0.7
+        temperature=0.7,
+        stream=isStream
     )
 
-    return response.choices[0].message.content
+    if isStream:
+
+        return response
+    
+    else:
+
+        return response.choices[0].message.content
 
 
 
 
-def ask_AI(model, prompt, history=None):
+def ask_AI(model, prompt, history=None,isStream=True):
 
     if model == "Qwen":
         return ask_Qwen(prompt, history)
     
     elif model == "llama-3.3-70b-versatile":
         
-        return ask_groq(prompt,history)
+        return ask_groq(prompt,history,isStream=isStream)
 
 
 def get_moreChunks(chunks, index, response):
@@ -140,7 +147,7 @@ def getReport(model,data):
         
         Data: {data}"""
     
-    response = ask_AI(model,prompt)
+    response = ask_AI(model,prompt,isStream=False)
 
     return response
 
@@ -152,11 +159,13 @@ def getResponse(model, chunks, ret_chunks, index, question, history=None, isBett
 
         prompt = getPrompt("ZeroQ", ret_chunks, question, history=history)
         response = ask_AI(model, prompt, history)
+        
 
     else:
 
         prompt = getPrompt("FirstQ", ret_chunks, question, history=history)
         response = ask_AI(model, prompt, history)
+        
 
         more_chunks = get_moreChunks(chunks, index, response)
 
@@ -166,13 +175,22 @@ def getResponse(model, chunks, ret_chunks, index, question, history=None, isBett
             prompt = getPrompt("SecondQ", ret_chunks, question, more_chunks, history=history)
             response = ask_AI(model, prompt, history)
 
-    if history is not None:
-
-        summary = summarize_turn(model, question, response)
-        history.append({"role": "user", "content": summary})
-        history.append({"role": "assistant", "content": "Acknowledged."})
+    
+        
 
     return response,history
+
+def appendHistory(summary, history):
+
+    if history is None:
+        history = []
+
+    history.append({"role": "user", "content": summary})
+    history.append({"role": "assistant", "content": "Acknowledged."})
+
+    return history
+
+
 
 def summarize_turn(model, question, response):
 
@@ -182,7 +200,7 @@ def summarize_turn(model, question, response):
     Assistant: {response}
     """
 
-    result = ask_AI(model, prompt)
+    result = ask_AI(model, prompt,isStream=False)
     return result if result else f"User asked: {question}"
 
 

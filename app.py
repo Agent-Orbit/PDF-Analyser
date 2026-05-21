@@ -9,7 +9,7 @@ st.set_page_config(
 pages = {
     "📄 PDF Tools": [
         st.Page(
-            "pages/1_PDF_Analyser.py",
+            "Pages/1_PDF_Analyser.py",
             title="PDF Analyser",
             icon="📊"
         ),

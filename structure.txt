@@ -1,4 +1,4 @@
-pdf-chatbot/
+pdf-analyser/
 │
 ├── app.py                  ← Streamlit UI
 ├── rag/
@@ -8,7 +8,7 @@ pdf-chatbot/
 │   ├── retriever.py        ← FAISS index build + search
 │   └── llm.py              ← Groq API call with retrieved context
 │
-├── uploads/                ← temp PDF storage (gitignored)
+|              
 ├── .env                    ← GROQ_API_KEY (gitignored)
 ├── requirements.txt
 └── .gitignore

@@ -4,4 +4,4 @@ numpy
 pdfplumber
 python-dotenv
 faiss-cpu
-google-genai
+groq

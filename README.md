@@ -60,7 +60,7 @@ Each turn summarized → LLM history stays lean regardless of conversation lengt
 | Layer | Technology |
 |---|---|
 | Frontend | Streamlit |
-| LLM | Gemini 2.0 Flash (Google GenAI SDK) |
+| LLM | Groq llama-3.3-70b-versatile |
 | Embeddings | `BAAI/bge-base-en-v1.5` via sentence-transformers |
 | Vector Search | FAISS (IndexFlatIP) |
 | PDF Parsing | pdfplumber |
@@ -77,7 +77,7 @@ numpy
 pdfplumber
 python-dotenv
 faiss-cpu
-google-genai
+groq
 ```
 
 ---
@@ -87,7 +87,7 @@ google-genai
 **1. Clone the repo**
 ```bash
 git clone https://github.com/AliAkbar4025/PDF-Analyser
-cd pdf-analyser
+cd PDF-Analyser
 ```
 
 **2. Install dependencies**
@@ -99,10 +99,10 @@ pip install -r requirements.txt
 
 Create a `.env` file:
 ```
-GEMINI_API_KEY=your_key_here
+GROQ_API_KEY=your_key_here
 ```
 
-Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+Get your key from [Groq](https://console.groq.com/keys)
 
 **4. Run**
 ```bash
@@ -113,7 +113,7 @@ streamlit run app.py
 
 ## Deployment
 
-Deployed on Streamlit Community Cloud. API key stored as a Streamlit secret under `GEMINI_API_KEY`.
+Deployed on Streamlit Community Cloud. API key stored as a Streamlit secret under `GROQ_API_KEY`.
 
 ---
 

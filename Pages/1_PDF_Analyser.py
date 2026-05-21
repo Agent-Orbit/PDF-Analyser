@@ -87,7 +87,7 @@ def main():
 
         st.markdown('<div class="tag">PDF Analyser</div>', unsafe_allow_html=True)
         st.markdown("### Upload Document")
-        st.markdown('<span class="model-badge">⬡ gemini-2.0-flash · API</span>', unsafe_allow_html=True)
+        st.markdown('<span class="model-badge">⬡ groq llama-3.3-70b-versatile · API</span>', unsafe_allow_html=True)
         st.markdown("---")
         st.markdown('<span class="model-badge">⚙ Mode</span>', unsafe_allow_html=True)
         isBetter = st.toggle("Better Mode", value=False, help="Retrieves additional chunks if the first pass lacks enough context")
@@ -112,7 +112,7 @@ def main():
 
                 st.session_state.pdf = uploadedData
                 st.session_state.pdf_id = uploadedData.file_id
-                st.session_state.model = "gemini-2.0-flash"
+                st.session_state.model = "llama-3.3-70b-versatile"
                 st.session_state.isBetter = isBetter
 
         st.markdown("---")

@@ -4,16 +4,16 @@ from rag import embedder, retriever
 import os
 import streamlit as st
 from dotenv import load_dotenv
-from google import genai
+from groq import Groq
 
 
-def get_geminiapi():
+def get_groqapi():
 
     load_dotenv()
     try:
-        return st.secrets["GEMINI_API_KEY"]
+        return st.secrets["GROQ_API_KEY"]
     except:
-        return os.getenv("GEMINI_API_KEY")
+        return os.getenv("GROQ_API_KEY")
 
     
 
@@ -30,36 +30,22 @@ def ask_Qwen(prompt, history=None):
 
     return response.json()["message"]["content"]
 
-client = genai.Client(api_key=get_geminiapi())
+groq_client = Groq(api_key=get_groqapi())
 
-def ask_gemini(prompt,history = None):
+def ask_groq(prompt, history=None):
 
-    gemini_history = []
+    messages = (history or []) + [{"role": "user", "content": prompt}]
 
-    for msg in history or []:
-
-        role = msg.get("role", "user")
-
-        if role == "assistant":
-            role = "model"
-
-        gemini_history.append(
-            {
-                "role": role,
-                "parts": [
-                    msg.get("content", "")
-                ]
-            }
-        )
-
-    chat = client.chats.create(
-        model="gemini-2.0-flash",
-        history=gemini_history
+    response = groq_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=messages,
+        max_tokens=1024,
+        temperature=0.7
     )
 
-    response = chat.send_message(prompt)
+    return response.choices[0].message.content
 
-    return response.text
+
 
 
 def ask_AI(model, prompt, history=None):
@@ -67,9 +53,9 @@ def ask_AI(model, prompt, history=None):
     if model == "Qwen":
         return ask_Qwen(prompt, history)
     
-    elif model == "gemini-2.0-flash":
+    elif model == "llama-3.3-70b-versatile":
         
-        return ask_gemini(prompt,history)
+        return ask_groq(prompt,history)
 
 
 def get_moreChunks(chunks, index, response):

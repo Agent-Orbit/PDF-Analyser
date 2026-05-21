@@ -2,7 +2,7 @@ pdf-analyser/
 │
 ├── app.py                  ← Streamlit UI
 ├── rag/
-│   ├── __init__.py
+│   |
 │   ├── pdf_parser.py       ← extract + chunk PDF
 │   ├── embedder.py         ← encode chunks with SentenceTransformer
 │   ├── retriever.py        ← FAISS index build + search

@@ -43,7 +43,7 @@ BGE Embeddings (BAAI/bge-base-en-v1.5) + FAISS Index
 AI Report Generation (top 5 chunks → Gemini)
     ↓
 Chat Loop (Standard):
-    Question → Embed → Retrieve Top-5 Chunks → Gemini → Answer
+    Question → Embed → Retrieve Top-5 Chunks → Groq → Answer
 
 Chat Loop (Better Mode):
     Question → Embed → Retrieve Chunks → Gemini checks if enough context

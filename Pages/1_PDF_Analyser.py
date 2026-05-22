@@ -1,6 +1,7 @@
 import streamlit as st
 from rag import pdf_parser, embedder, retriever, llm
-
+from supabase import create_client
+from utils import db_management
 
 st.set_page_config(page_title="PDF Analyser", page_icon="📄", layout="wide")
 
@@ -86,6 +87,31 @@ def main():
     with st.sidebar:
 
         st.markdown('<div class="tag">PDF Analyser</div>', unsafe_allow_html=True)
+        st.markdown("---")
+
+        # Authentication
+
+        if "supabase_auth" not in st.session_state:
+
+            st.session_state.supabase = create_client(db_management.getSB_url(),db_management.getSB_key())
+
+        if not st.session_state.get("auth_done"):
+            authLogic()
+        
+        # Add user name
+        if st.session_state.get("auth_done"):
+
+            if st.session_state.user is not None:
+                name = st.session_state.user.user_metadata.get("full_name", st.session_state.user.email)
+                st.markdown(f"### User: {name}")
+            else:
+                st.markdown("### Guest")
+        
+        st.write("")
+        if st.button("Logout",width="content",key="logout23"):
+            logout()
+
+        st.markdown("---")
         st.markdown("### Upload Document")
         st.markdown('<span class="model-badge">⬡ groq llama-3.3-70b-versatile · API</span>', unsafe_allow_html=True)
         st.markdown("---")
@@ -232,6 +258,121 @@ def getStream(response):
 
             if content:
                 yield content
+
+
+
+def signup():
+
+    st.markdown("## Username:")
+    name = st.text_input("Input Username", placeholder="someone")
+
+    st.markdown("## Email:")
+    email = st.text_input("Input E-mail adress", placeholder="someone@xyz.com")
+    st.markdown("## Password:")
+    password = st.text_input("Input Password", type="password")
+    st.write("")
+
+    if st.button("Sign up"):
+
+        with st.spinner("Signing you up..."):
+
+            try:
+
+                response = st.session_state.supabase.auth.sign_up({
+                    "email": email,
+                    "password": password,
+                    "options": {
+                        "data": {
+                            "full_name": name    
+                        }
+                    }
+                    })
+
+                st.success("Successfully Signed-in")
+                if response:
+                    st.session_state.user = response.user
+                    st.session_state.auth_done = True
+
+            except Exception as e:
+                st.error(e)
+
+
+def log_in():
+
+    st.markdown("## Email:")
+    email = st.text_input("Input E-mail adress", placeholder="someone@xyz.com")
+    st.markdown("## Password:")
+    password = st.text_input("Input Password", type="password")
+    st.write("")
+
+    if st.button("Log in"):
+
+        with st.spinner("Logging in..."):
+
+            try:
+                response = st.session_state.supabase.auth.sign_in_with_password({
+                    "email": email,
+                    "password": password
+                })
+
+                st.success(f"Logged in!")
+                if response:
+                    st.session_state.user = response.user
+                    st.session_state.auth_done = True
+
+            except Exception as e:
+                st.error(f"{e}")
+
+@st.dialog("User Authentication", dismissible=False)
+def authLogic():
+
+    if "auth_view" not in st.session_state:
+        st.session_state.auth_view = "choose"
+
+    if st.session_state.auth_view == "choose":
+
+        st.markdown("## Please sign up or log in")
+        col1, col2 = st.columns(2)
+        st.markdown("---")
+
+        with col1:
+            if st.button("Sign up", use_container_width=True, key="signup_main"):
+                st.session_state.auth_view = "signup"
+                st.rerun()
+
+        with col2:
+            if st.button("Log in", use_container_width=True, key="loginmain"):
+                st.session_state.auth_view = "login"
+                st.rerun()
+
+        st.markdown("---")
+        if st.button("Continue as Guest", key="guestcontinue"):
+            st.session_state.user = None
+            st.session_state.auth_done = True
+            st.rerun()
+
+    elif st.session_state.auth_view == "signup":
+        signup()
+
+    elif st.session_state.auth_view == "login":
+        log_in()
+    
+    if "auth_done" in st.session_state:
+
+        if st.session_state.auth_done:
+            st.rerun()
+
+def logout():
+
+    try:
+        st.session_state.supabase.auth.sign_out()
+    except:
+        pass
+
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+
+    st.rerun()
 
 
 

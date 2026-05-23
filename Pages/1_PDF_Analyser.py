@@ -238,7 +238,7 @@ def chatAI():
             with st.spinner("Thinking..."):
 
                 q_emb = embedder.embed_query(user_prompt)
-                ret_chunks = retriever.get_topK_chunks(st.session_state.chunks, st.session_state.index, q_emb)
+                ret_chunks = retriever.get_topK_chunks(st.session_state.chunks, st.session_state.index, user_prompt,q_emb)
                 if not ret_chunks:
                     st.warning("I couldn't find relevant information in this document.")
                     return

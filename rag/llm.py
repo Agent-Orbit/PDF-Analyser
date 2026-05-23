@@ -39,7 +39,6 @@ def ask_groq(prompt, history=None,isStream=True):
     response = groq_client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=messages,
-        max_tokens=1024,
         temperature=0.2,
         stream=isStream
     )
@@ -95,8 +94,11 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
         Do not wrap your entire response in a code block. Dont respond like according to data or like saying the text chunks i
         received. Behave professionally and respond properly.
 
-        Answer ONLY using the provided context. If the answer is not in the context, say exactly:
-        'I could not find this in the document.' Never use outside knowledge.
+        Follow these rules strictly:
+        - For questions about the document: answer ONLY from the provided context.
+        - For general conversational questions (greetings, clarifying a word, general knowledge): answer normally and helpfully.
+        - NEVER invent statistics, numbers, dates, or names that aren't in the context.
+        - If a document-specific question can't be answered from context, say: 'I could not find this in the document.
 
 
         Data: {chunks}
@@ -124,8 +126,11 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
         Dont respond like according to data or like saying the text chunks i
         received. Behave professionally and respond properly.
 
-        Answer ONLY using the provided context. If the answer is not in the context, say exactly:
-        'I could not find this in the document.' Never use outside knowledge.
+        Follow these rules strictly:
+        - For questions about the document: answer ONLY from the provided context.
+        - For general conversational questions (greetings, clarifying a word, general knowledge): answer normally and helpfully.
+        - NEVER invent statistics, numbers, dates, or names that aren't in the context.
+        - If a document-specific question can't be answered from context, say: 'I could not find this in the document.
 
 
         Chunks: {chunks}
@@ -146,8 +151,11 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
         Dont respond like according to data or like saying the text chunks i
         received. Behave professionally and respond properly.
 
-        Answer ONLY using the provided context. If the answer is not in the context, say exactly:
-        'I could not find this in the document.' Never use outside knowledge.
+        Follow these rules strictly:
+        - For questions about the document: answer ONLY from the provided context.
+        - For general conversational questions (greetings, clarifying a word, general knowledge): answer normally and helpfully.
+        - NEVER invent statistics, numbers, dates, or names that aren't in the context.
+        - If a document-specific question can't be answered from context, say: 'I could not find this in the document.
 
         Chunks: {chunks}
         Additional chunks: {more_chunks}
@@ -194,16 +202,16 @@ def getResponse(model, chunks, ret_chunks, index, question, history=None, isBett
     else:
 
         prompt = getPrompt("FirstQ", format_chunks(ret_chunks), question, history=history)
-        response = ask_AI(model, prompt, history)
+        response = ask_AI(model, prompt, history,isStream=False)
         
 
         more_chunks = get_moreChunks(chunks, index, response)
 
-        if more_chunks is not None:
+        #if more_chunks is not None:
 
             
-            prompt = getPrompt("SecondQ", format_chunks(ret_chunks), question, more_chunks, history=history)
-            response = ask_AI(model, prompt, history)
+        prompt = getPrompt("SecondQ", format_chunks(ret_chunks), question, more_chunks, history=history)
+        response = ask_AI(model, prompt, history)
 
     
         
@@ -232,6 +240,19 @@ def summarize_turn(model, question, response):
 
     result = ask_AI(model, prompt,isStream=False)
     return result if result else f"User asked: {question}"
+
+def getKeySentences(model, userPrompt):
+
+    prompt = f"""Make 3-5 key sentences from this question to find relevant text in a document.
+        Return ONLY a Python list of strings, nothing else. No explanation, no markdown.
+        Example: ["sentence1", "sentence2", "sentence3"]
+
+        Question: {userPrompt}"""
+
+    if model == "llama-3.3-70b-versatile":
+        
+        return json.loads(ask_groq(prompt,isStream=False))
+
 
 
 def main():

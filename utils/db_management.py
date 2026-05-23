@@ -19,3 +19,11 @@ def getSB_url():
         return st.secrets["SB_URL"]
     except:
         return os.getenv("SB_URL")
+
+def get_SBAnon():
+
+    load_dotenv()
+    try:
+        return st.secrets["SB_ANON_KEY"]
+    except:
+        return os.getenv("SB_ANON_KEY")

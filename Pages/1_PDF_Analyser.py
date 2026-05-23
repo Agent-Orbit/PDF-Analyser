@@ -91,9 +91,8 @@ def main():
 
         # Authentication
 
-        if "supabase_auth" not in st.session_state:
-
-            st.session_state.supabase = create_client(db_management.getSB_url(),db_management.getSB_key())
+        if "supabase" not in st.session_state:
+            st.session_state.supabase = create_client(db_management.getSB_url(), db_management.get_SBAnon())
 
         if not st.session_state.get("auth_done"):
             authLogic()
@@ -123,6 +122,8 @@ def main():
 
         uploadedData = st.file_uploader("Drop a PDF", type=["pdf"], label_visibility="collapsed")
 
+        st.session_state.isBetter = isBetter
+
         if uploadedData:
 
             st.success(f"📄 {uploadedData.name}")
@@ -141,7 +142,7 @@ def main():
                 st.session_state.pdf = uploadedData
                 st.session_state.pdf_id = uploadedData.file_id
                 st.session_state.model = "llama-3.3-70b-versatile"
-                st.session_state.isBetter = isBetter
+                
 
         st.markdown("---")
 
@@ -178,6 +179,14 @@ def showReport():
     report = llm.getReport(st.session_state.model, chunks[:chunks_sel])
     st.session_state.report = report
 
+    if st.session_state.user is not None:
+        res = st.session_state.supabase.table("sessions").insert({
+            "user_id": st.session_state.user.id,
+            "pdf_name": st.session_state.pdf.name,
+            "report": report
+        }).execute()
+        st.session_state.session_id = res.data[0]["id"]
+
 
 def chatAI():
 
@@ -208,6 +217,14 @@ def chatAI():
 
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
+            if msg["role"] == "assistant":
+
+                with st.expander("Sources"):
+
+                    for c in msg["ret_chunks"]:
+
+                        st.caption(f"Page {c['page']} · score {c['score']}")
+                        st.markdown(f"> {c['text'][:250]}...")
 
     user_prompt = st.chat_input("Ask about your document...")
 
@@ -222,6 +239,9 @@ def chatAI():
 
                 q_emb = embedder.embed_query(user_prompt)
                 ret_chunks = retriever.get_topK_chunks(st.session_state.chunks, st.session_state.index, q_emb)
+                if not ret_chunks:
+                    st.warning("I couldn't find relevant information in this document.")
+                    return
 
                 response, st.session_state.llm_history = llm.getResponse(
                     st.session_state.model,
@@ -240,15 +260,29 @@ def chatAI():
 
                 full_response += token
                 placeholder.markdown(full_response)
+
+            if ret_chunks:
+
+                with st.expander("Sources"):
+
+                    for c in ret_chunks:
+
+                        st.caption(f"Page {c['page']} · score {c['score']}")
+                        st.markdown(f"> {c['text'][:250]}...")
             
             summary = llm.summarize_turn(st.session_state.model,user_prompt,full_response)
             st.session_state.llm_history = llm.appendHistory(summary,st.session_state.llm_history)
                 
 
-            # st.markdown(response)
 
         st.session_state.chat_history.append({"role": "user", "content": user_prompt})
-        st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+        st.session_state.chat_history.append({"role": "assistant", "content": full_response,"ret_chunks": ret_chunks})
+
+        if st.session_state.user is not None:
+            st.session_state.supabase.table("messages").insert([
+                {"session_id": st.session_state.session_id, "role": "user", "content": user_prompt},
+                {"session_id": st.session_state.session_id, "role": "assistant", "content": full_response}
+            ]).execute()
 
 def getStream(response):
 
@@ -291,6 +325,15 @@ def signup():
                 st.success("Successfully Signed-in")
                 if response:
                     st.session_state.user = response.user
+
+                    if response.session:
+                        st.session_state.supabase.auth.set_session(
+                            response.session.access_token,
+                            response.session.refresh_token
+                        )
+                    else:
+                        st.info("Check your email to confirm your account.")
+
                     st.session_state.auth_done = True
 
             except Exception as e:
@@ -318,6 +361,10 @@ def log_in():
                 st.success(f"Logged in!")
                 if response:
                     st.session_state.user = response.user
+                    st.session_state.supabase.auth.set_session(
+                        response.session.access_token,
+                        response.session.refresh_token
+                    )
                     st.session_state.auth_done = True
 
             except Exception as e:

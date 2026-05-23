@@ -1,7 +1,7 @@
 import pdfplumber
 
 
-def get_chunks(pdf,chunk_size = 500, overlap = 50, separators = None):
+def get_chunks(pdf,chunk_size = 550, overlap = 75, separators = None):
 
     chunks = []
 
@@ -10,14 +10,18 @@ def get_chunks(pdf,chunk_size = 500, overlap = 50, separators = None):
         
         
         
-        for page in pdf.pages:
+        for pg_num,page in enumerate(pdf.pages,start=1):
 
             text = page.extract_text()
             if not text:
                 continue
 
-            page_chunk = recursive_chunk(text,chunk_size,overlap,separators)
-            chunks.extend(page_chunk)
+            page_chunks = recursive_chunk(text,chunk_size,overlap,separators)
+
+            for chunk in page_chunks:
+
+                chunks.append({"text": chunk,"page": pg_num})
+
         
     return chunks
 

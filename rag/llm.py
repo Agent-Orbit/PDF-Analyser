@@ -40,7 +40,7 @@ def ask_groq(prompt, history=None,isStream=True):
         model="llama-3.3-70b-versatile",
         messages=messages,
         max_tokens=1024,
-        temperature=0.7,
+        temperature=0.2,
         stream=isStream
     )
 
@@ -92,7 +92,12 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
         return f"""You are a PDF analyser. You are provided with data and you have to answer the user.
         Always be helpful. If you cant answer, say I dont know.
         Format your response in clean markdown: use headings, bullet points, bold text, and code blocks where appropriate.
-        Do not wrap your entire response in a code block.
+        Do not wrap your entire response in a code block. Dont respond like according to data or like saying the text chunks i
+        received. Behave professionally and respond properly.
+
+        Answer ONLY using the provided context. If the answer is not in the context, say exactly:
+        'I could not find this in the document.' Never use outside knowledge.
+
 
         Data: {chunks}
         Question: {question}
@@ -116,6 +121,13 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
             "queries": ["specific query 1", "specific query 2"]
         }}
 
+        Dont respond like according to data or like saying the text chunks i
+        received. Behave professionally and respond properly.
+
+        Answer ONLY using the provided context. If the answer is not in the context, say exactly:
+        'I could not find this in the document.' Never use outside knowledge.
+
+
         Chunks: {chunks}
         Question: {question}
         Chat history with you(Can be None too): {history}
@@ -130,20 +142,38 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
         Format your response in clean markdown: use headings, bullet points, bold text, and code blocks where appropriate.
         Do not wrap your entire response in a code block.
 
+
+        Dont respond like according to data or like saying the text chunks i
+        received. Behave professionally and respond properly.
+
+        Answer ONLY using the provided context. If the answer is not in the context, say exactly:
+        'I could not find this in the document.' Never use outside knowledge.
+
         Chunks: {chunks}
         Additional chunks: {more_chunks}
         Question: {question}
         Chat history with you(Can be None too): {history}
         """
     
-  
+def format_chunks(ret_chunks):
+    return "\n\n".join(
+        f"[Page {c['page']}] {c['text']}" for c in ret_chunks
+    )
 
-def getReport(model,data):
+def getReport(model,chunks_d):
+
+    data = " ".join([c["text"] for c in chunks_d])
 
     prompt = f""" You are a PDF analyser. You will be provided with PDF's main data. Generate a report based on PDF's
         topic and important things to focucs on.
         Format your response in clean markdown: use headings, bullet points, bold text, and code blocks where appropriate.
         Do not wrap your entire response in a code block.
+
+        Dont respond like according to data or like saying the text chunks i
+        received. Behave professionally and respond properly.
+
+        Answer ONLY using the provided context. If the answer is not in the context, say exactly:
+        'I could not find this in the document.' Never use outside knowledge.
         
         Data: {data}"""
     
@@ -157,13 +187,13 @@ def getResponse(model, chunks, ret_chunks, index, question, history=None, isBett
 
     if not isBetter:
 
-        prompt = getPrompt("ZeroQ", ret_chunks, question, history=history)
+        prompt = getPrompt("ZeroQ", format_chunks(ret_chunks), question, history=history)
         response = ask_AI(model, prompt, history)
         
 
     else:
 
-        prompt = getPrompt("FirstQ", ret_chunks, question, history=history)
+        prompt = getPrompt("FirstQ", format_chunks(ret_chunks), question, history=history)
         response = ask_AI(model, prompt, history)
         
 
@@ -172,7 +202,7 @@ def getResponse(model, chunks, ret_chunks, index, question, history=None, isBett
         if more_chunks is not None:
 
             
-            prompt = getPrompt("SecondQ", ret_chunks, question, more_chunks, history=history)
+            prompt = getPrompt("SecondQ", format_chunks(ret_chunks), question, more_chunks, history=history)
             response = ask_AI(model, prompt, history)
 
     

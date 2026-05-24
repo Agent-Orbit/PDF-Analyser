@@ -1,7 +1,8 @@
 import streamlit as st
-from rag import pdf_parser, embedder, retriever, llm
+from rag import pdf_parser, embedder, retriever, llm, evaluations
 from supabase import create_client
 from utils import db_management
+import math
 
 st.set_page_config(page_title="PDF Analyser", page_icon="📄", layout="wide")
 
@@ -225,6 +226,10 @@ def chatAI():
 
                         st.caption(f"Page {c['page']} · score {c['score']}")
                         st.markdown(f"> {c['text'][:250]}...")
+                    st.markdown("---")
+                
+                    st.caption(f"Faithfulness: {msg['faithfulness_Score']}%")
+
 
     user_prompt = st.chat_input("Ask about your document...")
 
@@ -261,6 +266,10 @@ def chatAI():
                 full_response += token
                 placeholder.markdown(full_response)
 
+            # eval metrics
+
+            faithfulness_score = evaluations.get_faithfulnessScore(user_q=user_prompt,llm_ans=full_response,ret_chunks=ret_chunks)
+            faith_score = None
             if ret_chunks:
 
                 with st.expander("Sources"):
@@ -269,6 +278,19 @@ def chatAI():
 
                         st.caption(f"Page {c['page']} · score {c['score']}")
                         st.markdown(f"> {c['text'][:250]}...")
+
+                    st.markdown("---")
+                    faith_score = faithfulness_score["faithfulness"]
+                    
+
+                    if math.isnan(faith_score[0]):
+                        st.caption("Faithfulness: unavailable")
+                    else:
+                        faith_score = round(faith_score[0] * 100, 1)
+                        st.caption(f"Faithfulness: {faith_score}%")
+                    
+                    
+                        
             
             summary = llm.summarize_turn(st.session_state.model,user_prompt,full_response)
             st.session_state.llm_history = llm.appendHistory(summary,st.session_state.llm_history)
@@ -276,7 +298,8 @@ def chatAI():
 
 
         st.session_state.chat_history.append({"role": "user", "content": user_prompt})
-        st.session_state.chat_history.append({"role": "assistant", "content": full_response,"ret_chunks": ret_chunks})
+        st.session_state.chat_history.append({"role": "assistant", "content": full_response,"ret_chunks": ret_chunks,
+                                              'faithfulness_Score': faith_score})
 
         if st.session_state.user is not None:
             st.session_state.supabase.table("messages").insert([

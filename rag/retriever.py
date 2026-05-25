@@ -55,15 +55,14 @@ def get_topK_chunks(chunks_d, index, q,q_emb, k=5, threshold=0.45,fallback_thres
                     "score": f"{score:.4f}"
                 })
     
-    ret_chunks=[]
+    ret_chunks = []
+    seen = set()
 
-    """seen = set()
     for chunk in retrieved_chunks:
-        if chunk not in seen:
-            seen.add(chunk)
-            ret_chunks.append(chunk)"""
 
+        if chunk["text"] not in seen:
+            
+            seen.add(chunk["text"])
+            ret_chunks.append(chunk)
 
-
-
-    return retrieved_chunks
+    return ret_chunks

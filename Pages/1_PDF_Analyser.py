@@ -307,6 +307,19 @@ def chatAI():
                 {"session_id": st.session_state.session_id, "role": "assistant", "content": full_response}
             ]).execute()
 
+        # Updating Data base
+
+        db_response = st.session_state.supabase.table("messages").select("history").eq("session_id"
+                                        ,st.session_state.session_id).single().execute()
+        st.write(db_response)
+        history = db_response["history"]
+
+        history.append({"role": "user", "content": user_prompt})
+        history.append({"role": "assistant", "content": full_response,
+                                              'faithfulness_Score': faith_score})
+        
+        st.session_state.supabase.table("messages").update("history",history).eq("session_id",st.session_state.session_id).execute()
+
 def getStream(response):
 
     for chunk in response:

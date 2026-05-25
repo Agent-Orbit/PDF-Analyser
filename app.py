@@ -13,6 +13,11 @@ pages = {
             title="PDF Analyser",
             icon="📊"
         ),
+
+        st.Page(
+            "Pages/2_Chat_History.py",
+            title="Chat History"
+        )
     ]
 }
 

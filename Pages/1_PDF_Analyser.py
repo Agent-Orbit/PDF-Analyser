@@ -301,24 +301,57 @@ def chatAI():
         st.session_state.chat_history.append({"role": "assistant", "content": full_response,"ret_chunks": ret_chunks,
                                               'faithfulness_Score': faith_score})
 
-        if st.session_state.user is not None:
-            st.session_state.supabase.table("messages").insert([
-                {"session_id": st.session_state.session_id, "role": "user", "content": user_prompt},
-                {"session_id": st.session_state.session_id, "role": "assistant", "content": full_response}
-            ]).execute()
+        
 
         # Updating Data base
-
-        db_response = st.session_state.supabase.table("messages").select("history").eq("session_id"
-                                        ,st.session_state.session_id).single().execute()
-        st.write(db_response)
-        history = db_response["history"]
-
-        history.append({"role": "user", "content": user_prompt})
-        history.append({"role": "assistant", "content": full_response,
-                                              'faithfulness_Score': faith_score})
         
-        st.session_state.supabase.table("messages").update("history",history).eq("session_id",st.session_state.session_id).execute()
+        db_response = (
+            st.session_state.supabase.table("messages")
+            .select("history")
+            .eq("session_id", st.session_state.session_id)
+            .maybe_single()
+            .execute()
+        )
+
+        if db_response is None:
+
+            new_history = [
+                {"role": "user", "content": user_prompt},
+                {
+                    "role": "assistant",
+                    "content": full_response,
+                    "faithfulness_Score": faith_score
+                }
+            ]
+
+            st.session_state.supabase.table("messages").insert([
+                {
+                    "session_id": st.session_state.session_id,
+                    "history": new_history
+                }
+            ]).execute()
+
+        else:
+
+            history = db_response.data["history"]
+
+            history.append({
+                "role": "user",
+                "content": user_prompt
+            })
+
+            history.append({
+                "role": "assistant",
+                "content": full_response,
+                "faithfulness_Score": faith_score
+                })
+
+            (
+                st.session_state.supabase.table("messages")
+                .update({"history": history})
+                .eq("session_id", st.session_state.session_id)
+                .execute()
+            )
 
 def getStream(response):
 

@@ -10,9 +10,17 @@ def main():
         st.session_state.supabase = create_client(db_management.getSB_url(), db_management.get_SBAnon())
 
     if "user" in st.session_state:
-        st.write(st.session_state.user)
+        st.session_state.user_id = st.session_state.user.id
+        show_History()
 
+def show_History():
 
+    response = st.session_state.supabase.table("sessions").select("*").eq("user_id",st.session_state.user.id).execute()
+    
+    if response is None:
+        st.markdown("# No History yet.")
+    else:
+        st.write(response)
 
 
 if __name__ == "__main__":

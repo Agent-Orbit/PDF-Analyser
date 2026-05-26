@@ -1,89 +1,29 @@
+import warnings
+import logging
+import os
+
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+warnings.filterwarnings("ignore")
+logging.getLogger("transformers").setLevel(logging.ERROR)
+
 import streamlit as st
 from rag import pdf_parser, embedder, retriever, llm, evaluations
 from supabase import create_client
 from utils import db_management
 import math
+from utils.style import apply_styles
 
 st.set_page_config(page_title="PDF Analyser", page_icon="📄", layout="wide")
+apply_styles()
 
-st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
-
-        html, body, [class*="css"] {
-            font-family: 'DM Mono', monospace;
-        }
-
-        h1, h2, h3 {
-            font-family: 'Syne', sans-serif;
-        }
-
-        .stApp {
-            background-color: #0d0d0d;
-            color: #e8e3d8;
-        }
-
-        section[data-testid="stSidebar"] {
-            background-color: #111111;
-            border-right: 1px solid #2a2a2a;
-        }
-
-        .stFileUploader {
-            background-color: #161616;
-            border: 1px dashed #3a3a3a;
-            border-radius: 8px;
-            padding: 1rem;
-        }
-
-        .stChatMessage {
-            background-color: #161616 !important;
-            border: 1px solid #2a2a2a;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-        }
-
-        .stChatInputContainer {
-            border-top: 1px solid #2a2a2a;
-            background-color: #0d0d0d;
-        }
-
-        .stSpinner > div {
-            border-top-color: #c8ff00 !important;
-        }
-
-        .stDivider {
-            border-color: #2a2a2a;
-        }
-
-        .tag {
-            display: inline-block;
-            background: #c8ff00;
-            color: #0d0d0d;
-            font-family: 'Syne', sans-serif;
-            font-weight: 700;
-            font-size: 0.65rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            padding: 2px 10px;
-            border-radius: 2px;
-            margin-bottom: 0.5rem;
-        }
-
-        .model-badge {
-            display: inline-block;
-            background: #1a1a1a;
-            border: 1px solid #3a3a3a;
-            color: #888;
-            font-size: 0.7rem;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-family: 'DM Mono', monospace;
-        }
-    </style>
-""", unsafe_allow_html=True)
 
 
 def main():
+
+    if not st.session_state.get("analyser_active"):
+
+        db_management.clear_history_state()
+        st.session_state.analyser_active = True
 
     with st.sidebar:
 
@@ -308,12 +248,24 @@ def chatAI():
         
         db_response = (
             st.session_state.supabase.table("messages")
-            .select("history")
+            .select("history, llm_history")
             .eq("session_id", st.session_state.session_id)
             .maybe_single()
             .execute()
         )
 
+        db_session_res = (st.session_state.supabase.table("sessions")
+            .select("title")
+            .eq("id", st.session_state.session_id)
+            .maybe_single()
+            .execute()
+        )
+
+        title = db_session_res.data['title']
+        if title is None:
+            (
+            st.session_state.supabase.table("sessions").update({"title": llm.make_title(st.session_state.pdf.name,user_prompt)}).eq("id",st.session_state.session_id).execute()
+            )
         if db_response is None:
 
             new_history = [
@@ -325,35 +277,43 @@ def chatAI():
                 }
             ]
 
+            new_llm_history = [
+                {"role": "user", "content": summary},
+                {"role": "assistant", "content": "Acknowledged."}
+            ]
+
             st.session_state.supabase.table("messages").insert([
                 {
                     "session_id": st.session_state.session_id,
-                    "history": new_history
+                    "history": new_history,
+                    "llm_history": new_llm_history
                 }
             ]).execute()
 
         else:
 
             history = db_response.data["history"]
+            llm_history = db_response.data["llm_history"] or []
 
-            history.append({
-                "role": "user",
-                "content": user_prompt
-            })
-
+            history.append({"role": "user", "content": user_prompt})
             history.append({
                 "role": "assistant",
                 "content": full_response,
                 "faithfulness_Score": faith_score
-                })
+            })
+
+            llm_history.append({"role": "user", "content": summary})
+            llm_history.append({"role": "assistant", "content": "Acknowledged."})
 
             (
                 st.session_state.supabase.table("messages")
-                .update({"history": history})
+                .update({
+                    "history": history,
+                    "llm_history": llm_history
+                })
                 .eq("session_id", st.session_state.session_id)
                 .execute()
             )
-
 def getStream(response):
 
     for chunk in response:

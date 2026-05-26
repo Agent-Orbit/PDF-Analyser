@@ -275,7 +275,18 @@ def getKeySentences(model, userPrompt):
         
         return json.loads(ask_groq(prompt,isStream=False))
 
+def make_title(pdf_name,qs,model=None):
 
+    prompt = f""""You are a PDF Analyser. User asked you a question regarding a PDF and 
+    you have to suggest a proper chat title. Proper meaningfull and not too long. Only return title nothing else.
+    
+    PDF name: {pdf_name}
+    User question: {qs}"""
+
+
+    title = ask_AI("llama-3.3-70b-versatile",prompt,isStream=False)
+
+    return title
 
 def main():
     pass

@@ -2,6 +2,7 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 import faiss
 
+
 model = SentenceTransformer("BAAI/bge-base-en-v1.5")
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 

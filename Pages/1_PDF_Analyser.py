@@ -285,6 +285,7 @@ def chatAI():
 
                     if math.isnan(faith_score[0]):
                         st.caption("Faithfulness: unavailable")
+                        faith_score = None
                     else:
                         faith_score = round(faith_score[0] * 100, 1)
                         st.caption(f"Faithfulness: {faith_score}%")

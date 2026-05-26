@@ -114,12 +114,16 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
 
         CHOICE 1 - If chunks have ENOUGH information:
         Answer the question in clean markdown: use headings, bullet points, bold text, and code blocks where appropriate.
-        Do not wrap your entire response in a code block.
+        Do not wrap your entire response in a code block.Respond in this format only:
+        {{
+            "need_more": False,
+            "response": you response
+        }}
 
         CHOICE 2 - If chunks are MISSING information:
         Respond ONLY with this JSON, nothing else, no markdown:
         {{
-            "need_more": true,
+            "need_more": True,
             "queries": ["specific query 1", "specific query 2"]
         }}
 
@@ -158,7 +162,6 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
         - If a document-specific question can't be answered from context, say: 'I could not find this in the document.
 
         Chunks: {chunks}
-        Additional chunks: {more_chunks}
         Question: {question}
         Chat history with you(Can be None too): {history}
         """
@@ -203,20 +206,39 @@ def getResponse(model, chunks, ret_chunks, index, question, history=None, isBett
 
         prompt = getPrompt("FirstQ", format_chunks(ret_chunks), question, history=history)
         response = ask_AI(model, prompt, history,isStream=False)
+
+        max_rounds = 3
+        round = 0
+        all_chunks = ret_chunks
+
+        while round < max_rounds:
+
+            more_chunks = get_moreChunks(chunks, index, response)
+
+            if not more_chunks:
+                break
+
+            all_chunks.extend(more_chunks)
+            round += 1
         
+            if round >= max_rounds:
+                break
 
-        more_chunks = get_moreChunks(chunks, index, response)
-
-        #if more_chunks is not None:
-
-            
-        prompt = getPrompt("SecondQ", format_chunks(ret_chunks), question, more_chunks, history=history)
+            prompt = getPrompt("FirstQ", format_chunks(all_chunks), question, history=history)
+            response = ask_AI(model, prompt, history, isStream=False)
+        
+        prompt = getPrompt("SecondQ", format_chunks(all_chunks), question, history=history)
         response = ask_AI(model, prompt, history)
+
+
+        
 
     
         
 
     return response,history
+
+
 
 def appendHistory(summary, history):
 

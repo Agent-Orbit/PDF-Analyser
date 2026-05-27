@@ -17,6 +17,7 @@ def main():
     if "user" in st.session_state:
 
         if st.session_state.user is None:
+            st.markdown("# Sign in to get access to History.")
             return
 
         st.session_state.user_id = st.session_state.user.id
@@ -25,6 +26,9 @@ def main():
             showChat(st.session_state.chat_id)
         else:
             show_History()
+    
+    
+        
     
     
 

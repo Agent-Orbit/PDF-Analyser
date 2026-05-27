@@ -109,7 +109,7 @@ def main():
                         .eq("session_id", st.session_state.session_id)
                         .execute()
                         )
-                        
+
                 st.rerun()
 
     if "pdf" not in st.session_state:
@@ -449,7 +449,6 @@ def authLogic():
                 st.session_state.auth_view = "login"
                 st.rerun()
 
-        st.markdown("---")
         if st.button("Continue as Guest", key="guestcontinue"):
             st.session_state.user = None
             st.session_state.auth_done = True

@@ -13,7 +13,6 @@ from utils import db_management
 import math
 from utils.style import apply_styles
 
-st.set_page_config(page_title="PDF Analyser", page_icon="📄", layout="wide")
 apply_styles()
 
 
@@ -90,9 +89,27 @@ def main():
         if "chat_history" in st.session_state and st.session_state.chat_history:
 
             if st.button("🗑 Clear Chat", use_container_width=True):
-
                 st.session_state.chat_history = []
                 st.session_state.llm_history = []
+                
+                if st.session_state.get("session_id"):  # only DB users
+
+                    db_response = (
+                        st.session_state.supabase.table("messages")
+                        .select("history,llm_history")
+                        .eq("session_id", st.session_state.session_id)
+                        .maybe_single()
+                        .execute()
+                    )
+
+                    if db_response is not None:
+                        (
+                        st.session_state.supabase.table("messages")
+                        .update({"history": None, "llm_history": None})
+                        .eq("session_id", st.session_state.session_id)
+                        .execute()
+                        )
+                        
                 st.rerun()
 
     if "pdf" not in st.session_state:
@@ -167,8 +184,12 @@ def chatAI():
                         st.caption(f"Page {c['page']} · score {c['score']}")
                         st.markdown(f"> {c['text'][:250]}...")
                     st.markdown("---")
-                
-                    st.caption(f"Faithfulness: {msg['faithfulness_Score']}%")
+                    
+                    score = msg.get('faithfulness_Score')
+                    if score is None or (isinstance(score, float) and math.isnan(score)):
+                        st.caption("Faithfulness: unavailable")
+                    else:
+                        st.caption(f"Faithfulness: {score}%")
 
 
     user_prompt = st.chat_input("Ask about your document...")
@@ -245,79 +266,81 @@ def chatAI():
         
 
         # Updating Data base
-        
-        db_response = (
-            st.session_state.supabase.table("messages")
-            .select("history, llm_history")
-            .eq("session_id", st.session_state.session_id)
-            .maybe_single()
-            .execute()
-        )
 
-        db_session_res = (st.session_state.supabase.table("sessions")
-            .select("title")
-            .eq("id", st.session_state.session_id)
-            .maybe_single()
-            .execute()
-        )
-
-        title = db_session_res.data['title']
-        if title is None:
-            (
-            st.session_state.supabase.table("sessions").update({"title": llm.make_title(st.session_state.pdf.name,user_prompt)}).eq("id",st.session_state.session_id).execute()
+        if st.session_state.get("session_id"):
+            db_response = (
+                st.session_state.supabase.table("messages")
+                .select("history, llm_history")
+                .eq("session_id", st.session_state.session_id)
+                .maybe_single()
+                .execute()
             )
-        if db_response is None:
 
-            new_history = [
-                {"role": "user", "content": user_prompt},
-                {
+            db_session_res = (st.session_state.supabase.table("sessions")
+                .select("title")
+                .eq("id", st.session_state.session_id)
+                .maybe_single()
+                .execute()
+            )
+
+            title = db_session_res.data['title']
+            if title is None:
+                (
+                st.session_state.supabase.table("sessions").update({"title": llm.make_title(st.session_state.pdf.name,user_prompt)}).eq("id",st.session_state.session_id).execute()
+                )
+            if db_response is None:
+
+                new_history = [
+                    {"role": "user", "content": user_prompt},
+                    {
+                        "role": "assistant",
+                        "content": full_response,
+                        "faithfulness_Score": faith_score,
+                        "ret_chunks": ret_chunks
+                    }
+                ]
+
+                new_llm_history = [
+                    {"role": "user", "content": summary},
+                    {"role": "assistant", "content": "Acknowledged."}
+                ]
+
+                st.session_state.supabase.table("messages").insert([
+                    {
+                        "session_id": st.session_state.session_id,
+                        "history": new_history,
+                        "llm_history": new_llm_history,
+                        
+                    }
+                ]).execute()
+
+            else:
+
+                history = db_response.data.get("history") or []
+                llm_history = db_response.data.get("llm_history") or []
+                
+
+                history.append({"role": "user", "content": user_prompt})
+                history.append({
                     "role": "assistant",
                     "content": full_response,
                     "faithfulness_Score": faith_score,
                     "ret_chunks": ret_chunks
-                }
-            ]
-
-            new_llm_history = [
-                {"role": "user", "content": summary},
-                {"role": "assistant", "content": "Acknowledged."}
-            ]
-
-            st.session_state.supabase.table("messages").insert([
-                {
-                    "session_id": st.session_state.session_id,
-                    "history": new_history,
-                    "llm_history": new_llm_history,
-                    
-                }
-            ]).execute()
-
-        else:
-
-            history = db_response.data["history"]
-            llm_history = db_response.data["llm_history"] or []
-            
-
-            history.append({"role": "user", "content": user_prompt})
-            history.append({
-                "role": "assistant",
-                "content": full_response,
-                "faithfulness_Score": faith_score,
-                "ret_chunks": ret_chunks
-            })
-
-            llm_history.append({"role": "user", "content": summary})
-            llm_history.append({"role": "assistant", "content": "Acknowledged."})
-
-            (
-                st.session_state.supabase.table("messages")
-                .update({
-                    "history": history,
-                    "llm_history": llm_history
                 })
-                .eq("session_id", st.session_state.session_id)
-                .execute()
-            )
+
+                llm_history.append({"role": "user", "content": summary})
+                llm_history.append({"role": "assistant", "content": "Acknowledged."})
+
+                (
+                    st.session_state.supabase.table("messages")
+                    .update({
+                        "history": history,
+                        "llm_history": llm_history
+                    })
+                    .eq("session_id", st.session_state.session_id)
+                    .execute()
+                )
+
 def getStream(response):
 
     for chunk in response:

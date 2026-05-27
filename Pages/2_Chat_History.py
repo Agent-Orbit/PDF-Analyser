@@ -2,10 +2,10 @@ import streamlit as st
 from supabase import create_client
 from utils import db_management
 from utils.style import apply_styles
+import math
 
 def main():
 
-    st.set_page_config(page_title="Chat History", page_icon="📄", layout="wide")
     apply_styles()
 
     if "analyser_active" in st.session_state:
@@ -89,7 +89,11 @@ def showChat(chatID):
                         st.markdown(f"> {c['text'][:250]}...")
                     st.markdown("---")
 
-                    st.caption(f"Faithfulness: {msg['faithfulness_Score']}%")
+                    score = msg.get('faithfulness_Score')
+                    if score is None or (isinstance(score, float) and math.isnan(score)):
+                        st.caption("Faithfulness: unavailable")
+                    else:
+                        st.caption(f"Faithfulness: {score}%")
 
 
 if __name__ == "__main__":

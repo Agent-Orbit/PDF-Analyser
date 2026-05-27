@@ -30,13 +30,20 @@ def ask_Qwen(prompt, history=None):
 
     return response.json()["message"]["content"]
 
-groq_client = Groq(api_key=get_groqapi())
+_groq_client = None
+
+def get_client():
+
+    global _groq_client
+    if _groq_client is None:
+        _groq_client = Groq(api_key=get_groqapi())
+    return _groq_client
 
 def ask_groq(prompt, history=None,isStream=True):
 
     messages = (history or []) + [{"role": "user", "content": prompt}]
 
-    response = groq_client.chat.completions.create(
+    response = get_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=messages,
         temperature=0.2,
@@ -64,7 +71,7 @@ def ask_AI(model, prompt, history=None,isStream=True):
         return ask_groq(prompt,history,isStream=isStream)
 
 
-def get_moreChunks(chunks, index, response):
+def get_moreChunks(chunks, index, response,q):
 
     try:
         parsed = json.loads(response)
@@ -75,7 +82,7 @@ def get_moreChunks(chunks, index, response):
             for q in parsed.get("queries", []):
 
                 q_emb = embedder.embed_query(q)
-                ret_chunks = retriever.get_topK_chunks(chunks, index, q_emb)
+                ret_chunks = retriever.get_topK_chunks(chunks, index, q,q_emb)
                 more_chunks.extend(ret_chunks)
 
         return more_chunks
@@ -88,83 +95,71 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
 
     if prompt_type == "ZeroQ":
 
-        return f"""You are a PDF analyser. You are provided with data and you have to answer the user.
-        Always be helpful. If you cant answer, say I dont know.
-        Format your response in clean markdown: use headings, bullet points, bold text, and code blocks where appropriate.
-        Do not wrap your entire response in a code block. Dont respond like according to data or like saying the text chunks i
-        received. Behave professionally and respond properly.
+        return f"""You are a precise PDF analysis assistant.
 
-        Follow these rules strictly:
-        - For questions about the document: answer ONLY from the provided context.
-        - For general conversational questions (greetings, clarifying a word, general knowledge): answer normally and helpfully.
-        - NEVER invent statistics, numbers, dates, or names that aren't in the context.
-        - If a document-specific question can't be answered from context, say: 'I could not find this in the document.
+        Answer the user's question using ONLY the provided document chunks.
+        Format your response in clean markdown (headings, bullet points, bold, code blocks where appropriate). Never wrap your full response in a code block.
 
+        Rules:
+        - Answer document questions strictly from the chunks below. Never invent facts, numbers, names, or dates.
+        - For greetings or general conversational questions, respond normally and helpfully.
+        - If the answer is not in the chunks, say exactly: "I could not find this in the document."
+        - Do not reference the chunks directly (e.g. avoid "according to the text" or "chunk 3 says").
 
-        Data: {chunks}
-        Question: {question}
-        Chat history with you(Can be None too): {history}
-        """
+        Document chunks:
+        {chunks}
+
+        Conversation so far:
+        {history or "None"}
+
+        User question: {question}"""
 
     elif prompt_type == "FirstQ":
 
-        return f"""You are a PDF analyser.
+        return f"""You are a PDF analysis assistant deciding whether you have enough context to answer.
 
-        Given chunks and a question, you have two choices:
+        Given document chunks and a user question, choose ONE of two responses:
 
-        CHOICE 1 - If chunks have ENOUGH information:
-        Answer the question in clean markdown: use headings, bullet points, bold text, and code blocks where appropriate.
-        Do not wrap your entire response in a code block.Respond in this format only:
-        {{
-            "need_more": False,
-            "response": you response
-        }}
+        OPTION A — You have enough information. Respond ONLY with this JSON:
+        {{"need_more": false, "response": "<your full markdown answer here>"}}
 
-        CHOICE 2 - If chunks are MISSING information:
-        Respond ONLY with this JSON, nothing else, no markdown:
-        {{
-            "need_more": True,
-            "queries": ["specific query 1", "specific query 2"]
-        }}
+        OPTION B — You need more context. Respond ONLY with this JSON:
+        {{"need_more": true, "queries": ["specific search query 1", "specific search query 2"]}}
 
-        Dont respond like according to data or like saying the text chunks i
-        received. Behave professionally and respond properly.
+        Rules:
+        - Output ONLY valid JSON. No preamble, no markdown fences, no explanation outside the JSON.
+        - Use false/true (lowercase), not Python True/False.
+        - Queries should be specific phrases likely to appear in the document, not paraphrases of the question.
+        - Never invent facts. If the answer genuinely isn't findable, use Option A and say "I could not find this in the document."
 
-        Follow these rules strictly:
-        - For questions about the document: answer ONLY from the provided context.
-        - For general conversational questions (greetings, clarifying a word, general knowledge): answer normally and helpfully.
-        - NEVER invent statistics, numbers, dates, or names that aren't in the context.
-        - If a document-specific question can't be answered from context, say: 'I could not find this in the document.
+        Document chunks:
+        {chunks}
 
+        Conversation so far:
+        {history or "None"}
 
-        Chunks: {chunks}
-        Question: {question}
-        Chat history with you(Can be None too): {history}
-        """
+        User question: {question}"""
 
     elif prompt_type == "SecondQ":
 
-        return f"""You are a PDF analyser.
+        return f"""You are a precise PDF analysis assistant.
 
-        Answer the question using the chunks provided.
-        If the answer is still not in the chunks, say you dont know.
-        Format your response in clean markdown: use headings, bullet points, bold text, and code blocks where appropriate.
-        Do not wrap your entire response in a code block.
+        You have been given additional document chunks to supplement your earlier retrieval. Answer the question using all provided chunks.
+        Format your response in clean markdown (headings, bullet points, bold, code blocks where appropriate). Never wrap your full response in a code block.
 
+        Rules:
+        - Answer strictly from the chunks. Never invent facts, numbers, names, or dates.
+        - For greetings or general conversational questions, respond normally.
+        - If the answer is still not in the chunks, say: "I could not find this in the document."
+        - Do not reference the chunks directly in your response.
 
-        Dont respond like according to data or like saying the text chunks i
-        received. Behave professionally and respond properly.
+        Document chunks:
+        {chunks}
 
-        Follow these rules strictly:
-        - For questions about the document: answer ONLY from the provided context.
-        - For general conversational questions (greetings, clarifying a word, general knowledge): answer normally and helpfully.
-        - NEVER invent statistics, numbers, dates, or names that aren't in the context.
-        - If a document-specific question can't be answered from context, say: 'I could not find this in the document.
+        Conversation so far:
+        {history or "None"}
 
-        Chunks: {chunks}
-        Question: {question}
-        Chat history with you(Can be None too): {history}
-        """
+        User question: {question}"""
     
 def format_chunks(ret_chunks):
     return "\n\n".join(
@@ -175,18 +170,14 @@ def getReport(model,chunks_d):
 
     data = " ".join([c["text"] for c in chunks_d])
 
-    prompt = f""" You are a PDF analyser. You will be provided with PDF's main data. Generate a report based on PDF's
-        topic and important things to focucs on.
-        Format your response in clean markdown: use headings, bullet points, bold text, and code blocks where appropriate.
-        Do not wrap your entire response in a code block.
+    prompt = f"""You are a document analyst. Synthesize the key themes, main arguments, and important information from the document excerpt below into a structured report.
 
-        Dont respond like according to data or like saying the text chunks i
-        received. Behave professionally and respond properly.
+    Format your report in clean markdown: use headings, bullet points, bold text, and code blocks where relevant. Do not wrap the entire response in a code block.
 
-        Answer ONLY using the provided context. If the answer is not in the context, say exactly:
-        'I could not find this in the document.' Never use outside knowledge.
-        
-        Data: {data}"""
+    Write professionally — do not reference the source text directly (avoid "the document says" or "in the provided text").
+
+    Document content:
+    {data}"""
     
     response = ask_AI(model,prompt,isStream=False)
 
@@ -213,7 +204,7 @@ def getResponse(model, chunks, ret_chunks, index, question, history=None, isBett
 
         while round < max_rounds:
 
-            more_chunks = get_moreChunks(chunks, index, response)
+            more_chunks = get_moreChunks(chunks, index, response,question)
 
             if not more_chunks:
                 break

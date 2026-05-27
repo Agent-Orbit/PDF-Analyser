@@ -273,7 +273,8 @@ def chatAI():
                 {
                     "role": "assistant",
                     "content": full_response,
-                    "faithfulness_Score": faith_score
+                    "faithfulness_Score": faith_score,
+                    "ret_chunks": ret_chunks
                 }
             ]
 
@@ -286,7 +287,8 @@ def chatAI():
                 {
                     "session_id": st.session_state.session_id,
                     "history": new_history,
-                    "llm_history": new_llm_history
+                    "llm_history": new_llm_history,
+                    
                 }
             ]).execute()
 
@@ -294,12 +296,14 @@ def chatAI():
 
             history = db_response.data["history"]
             llm_history = db_response.data["llm_history"] or []
+            
 
             history.append({"role": "user", "content": user_prompt})
             history.append({
                 "role": "assistant",
                 "content": full_response,
-                "faithfulness_Score": faith_score
+                "faithfulness_Score": faith_score,
+                "ret_chunks": ret_chunks
             })
 
             llm_history.append({"role": "user", "content": summary})

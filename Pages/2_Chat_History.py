@@ -15,6 +15,10 @@ def main():
         st.session_state.supabase = create_client(db_management.getSB_url(), db_management.get_SBAnon())
 
     if "user" in st.session_state:
+
+        if st.session_state.user is None:
+            return
+
         st.session_state.user_id = st.session_state.user.id
 
         if "chat_id" in st.session_state:
@@ -78,6 +82,13 @@ def showChat(chatID):
 
             if msg["role"] == "assistant":
                 with st.expander("Sources"):
+
+                    for c in msg["ret_chunks"]:
+
+                        st.caption(f"Page {c['page']} · score {c['score']}")
+                        st.markdown(f"> {c['text'][:250]}...")
+                    st.markdown("---")
+
                     st.caption(f"Faithfulness: {msg['faithfulness_Score']}%")
 
 

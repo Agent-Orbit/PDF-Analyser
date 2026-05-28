@@ -123,6 +123,13 @@ def main():
         with st.spinner("Parsing document..."):
             st.session_state.chunks = pdf_parser.get_chunks(st.session_state.pdf)
 
+            if not st.session_state.chunks:
+
+                st.error("This PDF appears to contain only images and no extractable text. Please upload a text-based PDF.")
+                del st.session_state.pdf
+                del st.session_state.pdf_id
+                st.stop()
+
         with st.spinner("Generating report..."):
             showReport()
 
@@ -209,15 +216,21 @@ def chatAI():
                     st.warning("I couldn't find relevant information in this document.")
                     return
 
-                response, st.session_state.llm_history = llm.getResponse(
-                    st.session_state.model,
-                    st.session_state.chunks,
-                    ret_chunks,
-                    st.session_state.index,
-                    user_prompt,
-                    history=st.session_state.llm_history,
-                    isBetter=st.session_state.isBetter
-                )
+                try:
+
+                    response, st.session_state.llm_history = llm.getResponse(
+                        st.session_state.model,
+                        st.session_state.chunks,
+                        ret_chunks,
+                        st.session_state.index,
+                        user_prompt,
+                        history=st.session_state.llm_history,
+                        isBetter=st.session_state.isBetter
+                    )
+                
+                except RuntimeError as e:
+                    st.warning("⚠ The AI service is currently rate limited. Please try again in a few minutes.")
+                    return
 
             placeholder = st.empty()
             full_response = ""
@@ -241,7 +254,10 @@ def chatAI():
                         st.markdown(f"> {c['text'][:250]}...")
 
                     st.markdown("---")
-                    faith_score = faithfulness_score["faithfulness"]
+                    if is_non_ans(full_response):
+                        faith_score = None
+                    else:
+                        faith_score = faithfulness_score["faithfulness"]
                     
 
                     if math.isnan(faith_score[0]):
@@ -395,6 +411,17 @@ def signup():
 
             except Exception as e:
                 st.error(e)
+
+def is_non_ans(response_text):
+
+    NON_ANSWERS = [
+        "i could not find this",
+        "i don't know",
+        "i couldn't find"
+    ]
+
+    lowered = response_text.lower()
+    return any(phrase in lowered for phrase in NON_ANSWERS) or len(response_text.split()) < 15
 
 
 def log_in():

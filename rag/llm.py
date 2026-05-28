@@ -5,7 +5,7 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 from groq import Groq
-
+import time
 
 def get_groqapi():
 
@@ -30,33 +30,56 @@ def ask_Qwen(prompt, history=None):
 
     return response.json()["message"]["content"]
 
+import time
+
 _groq_client = None
 
 def get_client():
-
     global _groq_client
     if _groq_client is None:
         _groq_client = Groq(api_key=get_groqapi())
     return _groq_client
 
-def ask_groq(prompt, history=None,isStream=True):
+MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
 
+def ask_groq(prompt, history=None, isStream=True):
+    
     messages = (history or []) + [{"role": "user", "content": prompt}]
 
-    response = get_client().chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=messages,
-        temperature=0.2,
-        stream=isStream
-    )
+    for model in MODELS:
+        try:
+            response = get_client().chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.2,
+                stream=isStream
+            )
+        except Exception as e:
 
-    if isStream:
+            error_str = str(e)
+            if "rate_limit_exceeded" in error_str:
+                
+                if "tokens per day" in error_str:
+                    continue
+                
+                time.sleep(15)
+                try:
+                    response = get_client().chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        temperature=0.2,
+                        stream=isStream
+                    )
+                except Exception:
+                    continue
+            else:
+                raise e
+        
+        return response if isStream else response.choices[0].message.content
 
-        return response
+    raise RuntimeError("All models rate limited. Try again later.")
+
     
-    else:
-
-        return response.choices[0].message.content
 
 
 
@@ -105,6 +128,8 @@ def getPrompt(prompt_type, chunks, question, more_chunks=None, history=None):
         - For greetings or general conversational questions, respond normally and helpfully.
         - If the answer is not in the chunks, say exactly: "I could not find this in the document."
         - Do not reference the chunks directly (e.g. avoid "according to the text" or "chunk 3 says").
+        - If the question asks about something not mentioned in the document (like a different paper, model, or system), 
+            say: "This document does not discuss [topic]. I can only answer questions about its content."
 
         Document chunks:
         {chunks}

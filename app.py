@@ -6,6 +6,10 @@ st.set_page_config(
     layout="wide"
 )
 
+
+
+
+
 pages = {
     "📄 PDF Tools": [
         st.Page(

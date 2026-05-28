@@ -8,8 +8,6 @@ def get_chunks(pdf,chunk_size = 550, overlap = 75, separators = None):
     with pdfplumber.open(pdf) as pdf:
 
         
-        
-        
         for pg_num,page in enumerate(pdf.pages,start=1):
 
             text = page.extract_text()
@@ -20,7 +18,7 @@ def get_chunks(pdf,chunk_size = 550, overlap = 75, separators = None):
 
             for chunk in page_chunks:
 
-                chunks.append({"text": chunk,"page": pg_num})
+                chunks.append({"text": f"{chunk}\n-taken from Page: {pg_num}","page": pg_num})
 
         
     return chunks

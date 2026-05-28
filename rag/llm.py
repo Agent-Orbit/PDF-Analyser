@@ -6,6 +6,7 @@ import streamlit as st
 from dotenv import load_dotenv
 from groq import Groq
 import time
+import streamlit as st
 
 def get_groqapi():
 
@@ -62,7 +63,7 @@ def ask_groq(prompt, history=None, isStream=True):
                 if "tokens per day" in error_str:
                     continue
                 
-                time.sleep(15)
+                time.sleep(10)
                 try:
                     response = get_client().chat.completions.create(
                         model=model,
@@ -76,6 +77,7 @@ def ask_groq(prompt, history=None, isStream=True):
                 raise e
         
         return response if isStream else response.choices[0].message.content
+    
 
     raise RuntimeError("All models rate limited. Try again later.")
 
@@ -85,6 +87,10 @@ def ask_groq(prompt, history=None, isStream=True):
 
 
 def ask_AI(model, prompt, history=None,isStream=True):
+
+    if "api_calls" in st.session_state:
+
+        st.session_state.api_calls += 1
 
     if model == "Qwen":
         return ask_Qwen(prompt, history)

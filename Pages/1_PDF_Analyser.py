@@ -82,6 +82,10 @@ def main():
                 st.session_state.pdf = uploadedData
                 st.session_state.pdf_id = uploadedData.file_id
                 st.session_state.model = "llama-3.3-70b-versatile"
+            
+            if "api_calls" not in st.session_state:
+
+                st.session_state.api_calls = 0
                 
 
         st.markdown("---")
@@ -268,6 +272,8 @@ def chatAI():
                         st.caption(f"Faithfulness: {faith_score}%")
                     
                     
+                    
+                    
                         
             
             summary = llm.summarize_turn(st.session_state.model,user_prompt,full_response)
@@ -356,6 +362,11 @@ def chatAI():
                     .eq("session_id", st.session_state.session_id)
                     .execute()
                 )
+    
+        with st.sidebar:
+            st.markdown("---")
+            st.caption(f"API calls: {st.session_state.api_calls}")
+            del st.session_state.api_calls
 
 def getStream(response):
 

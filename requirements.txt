@@ -9,3 +9,4 @@ supabase
 ragas
 langchain-groq
 datasets
+torchvision

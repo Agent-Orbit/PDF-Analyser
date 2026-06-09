@@ -117,11 +117,3 @@ Deployed on Streamlit Community Cloud. API key stored as a Streamlit secret unde
 
 ---
 
-## Roadmap
-
-- [ ] Multi-PDF support
-- [ ] Export chat as PDF
-- [ ] Support for scanned PDFs (OCR)
-- [ ] Streaming responses for real-time output
-- [ ] Better Mode optimization — reduce API calls via batched sub-query retrieval
-- [ ] Better Mode call counter — show user how many calls a question used

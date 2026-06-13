@@ -61,23 +61,23 @@ Uses vector embeddings and similarity search to locate the most relevant content
 
 ### Main Dashboard
 
-![Main Dashboard](images/main_page.png)
+![Main Dashboard](docs/images/main_page.png)
 
 ### PDF Question Answering
 
-![PDF QA](images/qa_pdf.png)
+![PDF QA](docs/images/qa_pdf.png)
 
 ### Source Citations
 
-![Citations](images/citations.png)
+![Citations](docs/images/citations.png)
 
 ### Chat History
 
-![History Main](images/history_main.png)
+![History Main](docs/images/history_main.png)
 
 ### Conversation Memory
 
-![History QA](images/history_qa.png)
+![History QA](docs/images/history_qa.png)
 
 ---
 

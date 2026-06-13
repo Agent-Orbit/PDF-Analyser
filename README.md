@@ -1,119 +1,136 @@
 # PDF Analyser
 
-[![Live](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)](https://analyser-for-pdf.streamlit.app/)
-[![App](https://img.shields.io/badge/Open%20App-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://analyser-for-pdf.streamlit.app/)
+<div align="center">
 
+### AI-Powered PDF Analysis & Conversational Document Intelligence
 
----
+Upload any PDF, generate instant insights, and chat with your documents using advanced Retrieval-Augmented Generation (RAG).
 
-## What It Does
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Open_App-FF4B4B?style=for-the-badge\&logo=streamlit\&logoColor=white)](https://analyser-for-pdf.streamlit.app/)
+[![Status](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)](https://analyser-for-pdf.streamlit.app/)
 
-Upload a PDF and the app will:
+**Live Application:** https://analyser-for-pdf.streamlit.app/
 
-- **Parse and chunk** the document with overlap-aware recursive splitting
-- **Generate an AI report** summarizing the document's topic and key points
-- **Let you chat** with the document — ask anything, get context-aware answers
-- **Remember conversation history** using a summarization system so the model never gets overloaded
-- **Better Mode** — toggle on for smarter, deeper answers on complex questions
+</div>
 
 ---
 
-## Better Mode
+## Overview
 
-By default the app runs in standard mode — one retrieval pass, fast answers.
+PDF Analyser transforms lengthy documents into an interactive AI experience.
 
-Toggle **Better Mode** on in the sidebar when:
-- The document is long or dense
-- Your question needs information spread across multiple sections
-- The standard answer feels incomplete
+Instead of manually reading hundreds of pages, users can upload a PDF, receive an AI-generated summary, and ask natural language questions to instantly extract information from the document.
 
-When Better Mode is on, the model first checks if the retrieved chunks have enough context. If not, it generates targeted follow-up queries, retrieves additional chunks, then answers using the combined context. Slower but significantly more accurate on hard questions.
+Designed for reports, research papers, business documents, manuals, contracts, academic material, and more.
+
+---
+
+## Key Features
+
+### AI Report Generation
+
+Generate a concise report highlighting the document's purpose, main topics, and key insights.
+
+### Conversational PDF Chat
+
+Ask questions in plain English and receive context-aware answers grounded in the uploaded document.
+
+### Source Citations
+
+Every response includes supporting document references so users can verify where information originated.
+
+### Advanced Retrieval Mode
+
+For complex questions spanning multiple sections, Better Mode performs additional retrieval steps to improve answer quality and context coverage.
+
+### Long-Term Conversation Memory
+
+Maintains chat context through intelligent summarization, enabling extended conversations without degrading performance.
+
+### Fast Semantic Search
+
+Uses vector embeddings and similarity search to locate the most relevant content across the entire document.
+
+---
+
+## Application Screenshots
+
+### Login Page
+
+![Login Page](images/log_in.png)
+
+### Main Dashboard
+
+![Main Dashboard](images/main_page.png)
+
+### PDF Question Answering
+
+![PDF QA](images/qa_pdf.png)
+
+### Source Citations
+
+![Citations](images/citations.png)
+
+### Chat History
+
+![History Main](images/history_main.png)
+
+### Conversation Memory
+
+![History QA](images/history_qa.png)
 
 ---
 
 ## How It Works
 
-```
-PDF Upload
-    ↓
-Recursive Chunking (500 char chunks, 50 char overlap)
-    ↓
-BGE Embeddings (BAAI/bge-base-en-v1.5) + FAISS Index
-    ↓
-AI Report Generation (top 5 chunks → Gemini)
-    ↓
-Chat Loop (Standard):
-    Question → Embed → Retrieve Top-5 Chunks → Groq → Answer
-
-Chat Loop (Better Mode):
-    Question → Embed → Retrieve Chunks → Gemini checks if enough context
-        → If yes: Answer directly
-        → If no:  Generate sub-queries → Retrieve more chunks → Answer with full context
-
-Each turn summarized → LLM history stays lean regardless of conversation length
-```
+1. Upload a PDF document
+2. The document is processed and indexed
+3. AI generates an initial summary report
+4. Ask questions in natural language
+5. Relevant document sections are retrieved
+6. Responses are generated using retrieved context
+7. Citations are provided for transparency and verification
 
 ---
 
-## Stack
+## Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Streamlit |
-| LLM | Groq llama-3.3-70b-versatile |
-| Embeddings | `BAAI/bge-base-en-v1.5` via sentence-transformers |
-| Vector Search | FAISS (IndexFlatIP) |
-| PDF Parsing | pdfplumber |
-| Deployment | Streamlit Community Cloud |
-
----
-
-## Requirements
-
-```
-streamlit
-sentence-transformers
-numpy
-pdfplumber
-python-dotenv
-faiss-cpu
-groq
-```
+| Component            | Technology                           |
+| -------------------- | ------------------------------------ |
+| Frontend             | Streamlit                            |
+| Large Language Model | Groq Llama 3.3 70B                   |
+| Embeddings           | BAAI BGE Base v1.5                   |
+| Vector Database      | FAISS                                |
+| PDF Processing       | pdfplumber                           |
+| Semantic Retrieval   | Retrieval-Augmented Generation (RAG) |
+| Deployment           | Streamlit Community Cloud            |
 
 ---
 
-## Running Locally
+## Use Cases
 
-**1. Clone the repo**
-```bash
-git clone https://github.com/AliAkbar4025/PDF-Analyser
-cd PDF-Analyser
-```
-
-**2. Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-**3. Add your API key**
-
-Create a `.env` file:
-```
-GROQ_API_KEY=your_key_here
-```
-
-Get your key from [Groq](https://console.groq.com/keys)
-
-**4. Run**
-```bash
-streamlit run app.py
-```
+* Research Paper Analysis
+* Business Report Review
+* Technical Documentation Search
+* Educational Material Exploration
+* Policy & Compliance Document Review
+* Internal Knowledge Base Querying
+* Contract & Legal Document Assistance
 
 ---
 
-## Deployment
+## Live Demo
 
-Deployed on Streamlit Community Cloud. API key stored as a Streamlit secret under `GROQ_API_KEY`.
+Try the application:
+
+**https://analyser-for-pdf.streamlit.app/**
 
 ---
 
+## Author
+
+**Ali Akbar**
+
+AI Engineering • Machine Learning • Data Science
+
+GitHub: https://github.com/AliAkbar4025

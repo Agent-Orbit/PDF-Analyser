@@ -57,7 +57,7 @@ Uses vector embeddings and similarity search to locate the most relevant content
 
 ### Login Page
 
-![Login Page](images/log_in.png)
+![Login Page](docs/images/log_in.png)
 
 ### Main Dashboard
 

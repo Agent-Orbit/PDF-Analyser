@@ -42,6 +42,8 @@ def show_History():
 
     else:
 
+        st.markdown("## History")
+
         for history in response.data:
 
             with st.container(border=True):

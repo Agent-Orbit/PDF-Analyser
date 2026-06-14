@@ -129,8 +129,4 @@ Try the application:
 
 ## Author
 
-**Ali Akbar**
-
-AI Engineering • Machine Learning • Data Science
-
-GitHub: https://github.com/AliAkbar4025
+**Agent Orbit team**

@@ -130,5 +130,7 @@ Try the application:
 ## Author
 
 **Ali Akbar**
+Self-taught ML/AI Developer — building AI-powered tools and autonomous agent systems.
 
-**LinkedIN: https://www.linkedin.com/in/ali-akbar-3148b940b/**
+- LinkedIn: [linkedin.com/in/ali-akbar-3148b940b](https://www.linkedin.com/in/ali-akbar-3148b940b/)
+- GitHub: [@Agent-Orbit](https://github.com/Agent-Orbit)
